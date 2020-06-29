@@ -99,8 +99,13 @@ func (r *ReconcileJob) Reconcile(request reconcile.Request) (reconcile.Result, e
 	node := &v1.Node{}
 	err = r.client.Get(context.TODO(), types.NamespacedName{Name: nodeName}, node)
 	if err != nil {
-		klog.Errorln(err, "No node found", nodeName)
-		return reconcile.Result{}, err
+		if instance.Annotations["fencing/mode"] == "delete" {
+			klog.Infoln("Instance no longer exists", nodeName)
+			return reconcile.Result{}, nil
+		} else {
+			klog.Errorln(err, "No node found", nodeName)
+			return reconcile.Result{}, err
+		}
 	}
 
 	// We need to wait until job succeeded
